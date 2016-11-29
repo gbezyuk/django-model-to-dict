@@ -1,6 +1,9 @@
-from filebrowser.fields import FileBrowseField  # not really a dependency, will be extracted before packaging
+from .plugins import FilebrowserFieldSerializationPlugin
+
 
 class ToDictMixin:
+    
+    _serialization_plugins = (FilebrowserFieldSerializationPlugin, )
 
     def to_dict(self):
         opts = self._meta
@@ -33,20 +36,11 @@ class ToDictMixin:
                 if f.name in self.TO_DICT_GROUPING.keys():
                     data[f.name] = f.value_from_object(self)
                     continue
-            # handling images and other files
-            if type(f) == FileBrowseField:
-                data[f.name] = {}
-                try:
-                    file = f.value_from_object(self)
-                    if file:
-                        data[f.name]['original'] = file.url
-                        for version in FILEBROWSER_VERSIONS:
-                            data[f.name][version] = file.version_generate(version).url
-                except FileNotFoundError:
-                    data[f.name]['error'] = 'file not found'
+            # handling images and other non-trivial files
+            if self._handle_nontrivial_field(f, data):
+                continue
             # handling default case
-            else:
-                data[f.name] = f.value_from_object(self)
+            data[f.name] = f.value_from_object(self)
 
         # cleanup for unused grouping
         for k in [k for k in data.keys() if data[k] == {}]:
@@ -63,6 +57,13 @@ class ToDictMixin:
             self._to_dict_pre_finish_hook(data)
 
         return data
+
+    def _handle_nontrivial_field(self, field, data):
+        for plugin in self._serialization_plugins:
+            if plugin.check_field(field):
+                data[field.name] = plugin.serialize_field(field, self)
+                return True
+        return False
 
     def _default_related_fields_strategy(self, opts, data):
         related_fields = [f for f in opts.get_all_related_objects() if f.is_relation and f.multiple]
