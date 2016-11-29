@@ -1,9 +1,9 @@
-from .plugins import FilebrowserFieldSerializationPlugin
+from .plugins.serialization.filebrowser_field import FilebrowserFieldSerializationPlugin
 
 
 class ToDictMixin:
-    
-    _serialization_plugins = (FilebrowserFieldSerializationPlugin, )
+
+    TO_DICT_SERIALIZATION_PLUGINS = (FilebrowserFieldSerializationPlugin, )
 
     def to_dict(self):
         opts = self._meta
@@ -19,31 +19,31 @@ class ToDictMixin:
             for prefix in self.TO_DICT_GROUPING_PREFIXES:
                 data[self._clean_grouping_prefix(prefix)] = {}
 
-        for f in opts.concrete_fields:
+        for field in opts.concrete_fields:
             # skipping explicitly specified fields
             if self.TO_DICT_SKIP_FIELDS:
-                if f.name in self.TO_DICT_SKIP_FIELDS:
+                if field.name in self.TO_DICT_SKIP_FIELDS:
                     continue
             # handling prefixed fields grouping
             if self.TO_DICT_GROUPING_PREFIXES:
-                prefix = self._get_grouping_prefix(f.name)
+                prefix = self._get_grouping_prefix(field.name)
                 if prefix:
                     prefix_key = self._clean_grouping_prefix(prefix)
-                    data[prefix_key][f.name.replace(prefix, '')] = f.value_from_object(self)
+                    data[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
                     continue
             # handling manually specified field grouping
             if self.TO_DICT_GROUPING:
-                if f.name in self.TO_DICT_GROUPING.keys():
-                    data[f.name] = f.value_from_object(self)
+                if field.name in self.TO_DICT_GROUPING.keys():
+                    data[field.name] = field.value_from_object(self)
                     continue
             # handling images and other non-trivial files
-            if self._handle_nontrivial_field(f, data):
+            if self._handle_nontrivial_field(field, data):
                 continue
             # handling default case
-            data[f.name] = f.value_from_object(self)
+            data[field.name] = field.value_from_object(self)
 
         # cleanup for unused grouping
-        for k in [k for k in data.keys() if data[k] == {}]:
+        for k in [k for k in data if data[k] == {}]:
             del data[k]
 
         # the mixin allows to redifine the related fields strategy
@@ -59,7 +59,7 @@ class ToDictMixin:
         return data
 
     def _handle_nontrivial_field(self, field, data):
-        for plugin in self._serialization_plugins:
+        for plugin in self.TO_DICT_SERIALIZATION_PLUGINS:
             if plugin.check_field(field):
                 data[field.name] = plugin.serialize_field(field, self)
                 return True
@@ -76,6 +76,6 @@ class ToDictMixin:
         for group_prefix in self.TO_DICT_GROUPING_PREFIXES:
             if field_name.startswith(group_prefix):
                 return group_prefix
-            
+
     def _clean_grouping_prefix(self, prefix):
         return prefix.replace('_', '')
