@@ -1,21 +1,16 @@
-from .plugins.serialization.filebrowser_field import FilebrowserFieldSerializationPlugin
-
-
-class ToDictMixin:
-
-    TO_DICT_SERIALIZATION_PLUGINS = (FilebrowserFieldSerializationPlugin, )
+class ToDictMixin:    
 
     def to_dict(self):
         opts = self._meta
         data = {}
 
         # initializing manually specified field grouping
-        if self.TO_DICT_GROUPING:
+        if self.TO_DICT_FIELD_GROUPING:
             for prefix in self.TO_DICT_GROUPING:
                 data[prefix] = {}
 
         # initializing prefixed field grouping
-        if self.TO_DICT_GROUPING_PREFIXES:
+        if self.TO_DICT_AUTOGROUPING_PREFIXES:
             for prefix in self.TO_DICT_GROUPING_PREFIXES:
                 data[self._clean_grouping_prefix(prefix)] = {}
 
@@ -25,14 +20,14 @@ class ToDictMixin:
                 if field.name in self.TO_DICT_SKIP_FIELDS:
                     continue
             # handling prefixed fields grouping
-            if self.TO_DICT_GROUPING_PREFIXES:
+            if self.TO_DICT_AUTOGROUPING_PREFIXES:
                 prefix = self._get_grouping_prefix(field.name)
                 if prefix:
                     prefix_key = self._clean_grouping_prefix(prefix)
                     data[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
                     continue
             # handling manually specified field grouping
-            if self.TO_DICT_GROUPING:
+            if self.TO_DICT_FIELD_GROUPING:
                 if field.name in self.TO_DICT_GROUPING.keys():
                     data[field.name] = field.value_from_object(self)
                     continue
@@ -71,9 +66,9 @@ class ToDictMixin:
             data[rf.name] = [i.to_dict() for i in getattr(self, rf.name).all()]
 
     def _get_grouping_prefix(self, field_name):
-        if not self.TO_DICT_GROUPING_PREFIXES:
+        if not self.TO_DICT_AUTOGROUPING_PREFIXES:
             return None
-        for group_prefix in self.TO_DICT_GROUPING_PREFIXES:
+        for group_prefix in self.TO_DICT_AUTOGROUPING_PREFIXES:
             if field_name.startswith(group_prefix):
                 return group_prefix
 
