@@ -82,12 +82,21 @@ class ToDictMixin:
     ```
 
     The prefixes are supposed to end with a separator character(s). If you use a separator other than default '_',
-    specify it using `TO_DICT_PREFIX_SEPARATOR`.
+    specify it using `TO_DICT_PREFIX_SEPARATOR`. `TO_DICT_SERIALIZATION_PLUGINS` may be set in global settings or
+    as a model property. It's empty by default.
 
 
     ## Serialization Plugins For Particular Field Types
 
-    TODO
+    Django allows developers to use custom model field types, which may require specific serialization logic.
+    Use Serialization Plugins for this purpose. Consider, you want to serialize information about django-filebrowser's
+    image versions:
+
+    ```
+    TO_DICT_SERIALIZATION_PLUGINS = ('model_to_dict.plugins.serialization.FilebrowserFieldSerializationPlugin', )
+    ```
+
+    `TO_DICT_SERIALIZATION_PLUGINS` may be set in global settings or as a model property. It's empty by default.
 
 
     """
