@@ -111,3 +111,37 @@ class Customer(models.Model, ToDictMixin):
     }
     TO_DICT_PREFIXES = ('address_',)
     TO_DICT_POSTFIXES = ('_name',)
+
+
+class Product(models.Model, ToDictMixin):
+    """This model describes a product"""
+
+    class Meta:
+        verbose_name = _('Product')
+        verbose_name_plural = _('Product')
+
+    name = models.CharField(max_length=100, verbose_name=_('name'))
+    price = models.PositiveIntegerField(verbose_name=_('price'))
+
+
+class Order(models.Model, ToDictMixin):
+    """This model reflects an order in a shop"""
+
+    class Meta:
+        verbose_name = _('Order')
+        verbose_name_plural = _('Orders')
+
+    customer = models.ForeignKey(to=Customer, verbose_name=_('customer'), related_name='orders')
+
+
+class OrderPosition(models.Model, ToDictMixin):
+    """This model reflects a single order position"""
+
+    class Meta:
+        verbose_name = _('Order Position')
+        verbose_name_plural = _('Order Positions')
+
+    price = models.PositiveIntegerField(verbose_name=_('price'))
+    quantity = models.PositiveIntegerField(verbose_name=_('quantity'))
+    product = models.ForeignKey(to=Product, verbose_name=_('product'), related_name='order_positions')
+    order = models.ForeignKey(to=Order, verbose_name=_('order'), related_name='order_positions')

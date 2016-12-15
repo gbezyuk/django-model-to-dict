@@ -102,9 +102,19 @@ class ToDictMixin:
     """
 
     def to_dict(self, compress_fields=True, compress_groups=True, compress_prefixes=True, compress_postfixes=True,
-                compress_empty_groups=True):
+                compress_empty_groups=False, inspect_related_objects=True, compress_empty_related_objects=False,
+                __ive_been_there_already=tuple()):
         """
         Serializes model's fields into a python dictionary.
+
+        :param compress_fields: ignore None fields on root level
+        :param compress_groups: ignore None fields inside manual groups
+        :param compress_prefixes: ignore None fields inside prefix groups
+        :param compress_postfixes: ignore None fields inside postfix groups
+        :param compress_empty_groups: ignore empty groups as a whole
+        :param inspect_related_objects: inspect related objects
+        :param compress_empty_related_objects: ignore empty or None values in related objects
+        :param __ive_been_there_already: private param to prevent infinite recursion
 
         :return: python dictionary representing serialized fields of the model
         """
@@ -154,8 +164,8 @@ class ToDictMixin:
             # TODO: custom mapping
 
             # handling images and other non-trivial files
-            # if self._handle_nontrivial_field(field, result):
-            #     continue
+            if self._handle_nontrivial_field(field, result):
+                continue
 
             # handling default case
             result[field.name] = field.value_from_object(self)
@@ -172,19 +182,16 @@ class ToDictMixin:
         if compress_empty_groups:
             self._compress_empty_groups(result)
 
-        # cleanup for unused grouping
-        # for k in [k for k in result if result[k] == {}]:
-        #     del result[k]
+        if inspect_related_objects:
+            # there's a posibility to redefine the related fields strategy
+            if hasattr(self, '_to_dict_related_fields_strategy'):
+                self._to_dict_related_fields_strategy(result)
+            else:
+                self._default_related_fields_strategy(result)
 
-        # the mixin allows to redefine the related fields strategy
-        # if hasattr(self, '_to_dict_related_fields_strategy'):
-        #     self._to_dict_related_fields_strategy(result)
-        # else:
-        #     self._default_related_fields_strategy(result)
-
-        # calling pre_finish_hook if exists
-        # if hasattr(self, '_to_dict_pre_finish_hook'):
-        #     self._to_dict_pre_finish_hook(result)
+        # calling pre_finish_hook if there is one
+        if hasattr(self, '_to_dict_pre_finish_hook'):
+            self._to_dict_pre_finish_hook(result)
 
         return result
 
@@ -210,10 +217,28 @@ class ToDictMixin:
                 return True
         return False
 
-    def _default_related_fields_strategy(self, data):
-        related_fields = [f for f in self._meta.get_all_related_objects() if f.is_relation and f.multiple]
+    def _default_related_fields_strategy(self, result):
+        # TODO: better tests
+
+        # before Django 1.10
+        # related_fields = [f for f in self._meta.get_all_related_objects() if f.is_relation and f.multiple]
+        # for rf in related_fields:
+        #     result[rf.name] = [i.to_dict() for i in getattr(self, rf.name).all()]
+
+        related_fields = [rf for rf in self._meta.get_fields() if rf.is_relation]
         for rf in related_fields:
-            data[rf.name] = [i.to_dict() for i in getattr(self, rf.name).all()]
+            # TODO use __ive_been_there_already to prevent infinite recursion here
+            if rf.one_to_many:
+                # TODO: setup inspect_related_objects=False on to_dict() calls for related objects
+                result[rf.related_name] = [
+                    i.to_dict(inspect_related_objects=False) for i in getattr(self, rf.related_name).all()]
+            if rf.many_to_one or rf.one_to_one:
+                related_object = getattr(self, rf.name)
+                if hasattr(related_object, 'to_dict'):
+                    result[rf.name] = related_object.to_dict(inspect_related_objects=False)
+            if rf.many_to_many:
+                print('many_to_many', rf.name, rf)
+
 
     def _get_prefix(self, field_name):
         for prefix in getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES):

@@ -1,5 +1,7 @@
 from django.test import TestCase
-from .models import DegenerateModel, DegenerateTimestampedModel, ContactPerson, DeliveryRecord, Person, Customer
+from .models import DegenerateModel, DegenerateTimestampedModel,\
+    ContactPerson, DeliveryRecord, Person,\
+    Customer, Product, Order, OrderPosition
 
 
 class DegenerateTestCase(TestCase):
@@ -117,12 +119,12 @@ class CustomerTestCase(TestCase):
                               tel="333-55-55", email="super.ivo@bobul.com", website="https://super.ivo.bobul.com",
                               address_country="Ukraine", address_city="Kiev", address_street="Tarasa Shevchenko")
 
-    def test_person_to_dict(self):
+    def test_customer_to_dict(self):
         """This test tests both prefix and manual field grouping, as well as field skipping"""
 
         customer = Customer.objects.get()
 
-        self.assertEqual(customer.to_dict(), {
+        self.assertEqual(customer.to_dict(inspect_related_objects=False), {
             'name': {
                 'first': customer.first_name,
                 'middle': customer.middle_name,
@@ -140,4 +142,55 @@ class CustomerTestCase(TestCase):
                 'city': customer.address_city,
                 'street': customer.address_street
             }
+        })
+
+
+class OrderTestCase(TestCase):
+    def setUp(self):
+        c = Customer.objects.create(first_name="Ivo", nickname="Super", last_name="Bobul", middle_name="Tarasovich",
+                                    actually_exists=False, has_superpowers=True,
+                                    tel="333-55-55", email="super.ivo@bobul.com", website="https://super.ivo.bobul.com",
+                                    address_country="Ukraine", address_city="Kiev", address_street="Tarasa Shevchenko")
+
+        apple = Product.objects.create(name='Apple', price=10)
+        pear = Product.objects.create(name='Pear', price=12)
+        tomato = Product.objects.create(name='Tomato', price=9)
+
+        order = Order.objects.create(customer=c)
+        OrderPosition.objects.create(order=order, product=apple, price=apple.price, quantity=1)
+        OrderPosition.objects.create(order=order, product=pear, price=pear.price, quantity=1)
+        OrderPosition.objects.create(order=order, product=tomato, price=tomato.price, quantity=1)
+
+    def test_order_to_dict(self):
+        """A complex test for related fields"""
+
+        customer = Customer.objects.get()
+        order = Order.objects.get()
+
+        self.assertEqual(order.to_dict(), {
+            'customer': {
+                'name': {
+                    'first': customer.first_name,
+                    'middle': customer.middle_name,
+                    'last': customer.last_name,
+                },
+                'nickname': customer.nickname,
+                'has_superpowers': customer.has_superpowers,
+                'contacts': {
+                    'tel': customer.tel,
+                    'email': customer.email,
+                    'website': customer.website
+                },
+                'address': {
+                    'country': customer.address_country,
+                    'city': customer.address_city,
+                    'street': customer.address_street
+                }
+            },
+            'id': order.id,
+            'order_positions': [
+                {'quantity': 1, 'product': 1, 'id': 1, 'order': order.id, 'price': 10},
+                {'quantity': 1, 'product': 2, 'id': 2, 'order': order.id, 'price': 12},
+                {'quantity': 1, 'product': 3, 'id': 3, 'order': order.id, 'price': 9}
+            ]
         })
