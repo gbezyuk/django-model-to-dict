@@ -45,7 +45,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='django-model-to-dict',
-    version='0.1.0',
+    version='0.2.0',
     description="""Django Model to Python dict serialization mixin.""",
     long_description=readme + '\n\n' + history,
     author='Grigoriy Beziuk',
