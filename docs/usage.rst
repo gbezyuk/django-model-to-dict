@@ -9,18 +9,21 @@ To use Django-Model-To-Dict in a project, add it to your `INSTALLED_APPS`:
     INSTALLED_APPS = (
         ...
         'django_model_to_dict.apps.DjangoModelToDictConfig',
+        # or just 'django_model_to_dict'
         ...
     )
 
-Add Django-Model-To-Dict's URL patterns:
+Use `ToDictMixin` with your model:
 
 .. code-block:: python
 
-    from django_model_to_dict import urls as django_model_to_dict_urls
+    from django_model_to_dict.mixins import ToDictMixin
+    from django.db import models
 
 
-    urlpatterns = [
-        ...
-        url(r'^', include(django_model_to_dict_urls)),
-        ...
-    ]
+    class YourModel(models.Model, ToDictMixin):
+        pass
+
+Since now you model's instance have the `to_dict` method defined.
+
+You can setup additional settings both in your global project configuration or in a particular model.

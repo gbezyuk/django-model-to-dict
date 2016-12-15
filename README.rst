@@ -13,7 +13,8 @@ Django Model to Python dict serialization mixin.
 Based on the original gist:
 https://gist.github.com/gbezyuk/de29d4888818b87f8addd8143b5331e0
 
-# Requirements
+Requirements
+------------
 
 Currently the package is tested with Python3 and Django 1.10 only.
 
