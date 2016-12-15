@@ -81,59 +81,36 @@ class DeliveryRecordTestCase(TestCase):
                 'street': delivery.address_street
             }
         })
-#
-#
-# class PersonTestCase(TestCase):
-#     def setUp(self):
-#         Person.objects.create(first_name="John", last_name="Doe", actually_exists=True, has_superpowers=False,
-#                               tel="555-55-11", email="john@example.com", website="http://john.doe.me",
-#                               address_country="USA", address_state="NY", address_city="New York",
-#                               address_street="Boulevard of Broken Dreams")
-#         Person.objects.create(first_name="Ivo", nickname="Super", last_name="Bobul", middle_name="Tarasovich",
-#                               actually_exists=False, has_superpowers=True,
-#                               tel="333-55-55", email="super.ivo@bobul.com", website="https://super.ivo.bobul.com",
-#                               address_country="Ukraine", address_city="Kiev", address_street="Tarasa Shevchenko")
-#
-#     def test_person_to_dict(self):
-#         """This test tests both prefix and manual field grouping, as well as field skipping"""
-#
-#         john = Person.objects.get(first_name="John")
-#         self.assertEqual(john.to_dict(), {
-#             'name': {
-#                 'first': 'John',
-#                 'last': 'Doe'
-#             },
-#             'has_superpowers': False,
-#             'contacts': {
-#                 'tel': '555-55-11',
-#                 'email': 'john@example.com',
-#                 'website': 'http://john.doe.me'
-#             },
-#             'address': {
-#                 'country': 'USA',
-#                 'state': 'NY',
-#                 'city': 'New York',
-#                 'street': 'Boulevard of Broken Dreams'
-#             }
-#         })
-#
-#         ivo = Person.objects.get(first_name="Ivo")
-#         self.assertEqual(john.to_dict(), {
-#             'name': {
-#                 'first': 'Ivo',
-#                 'middle': 'Tarasovich',
-#                 'last': 'Bobul',
-#             },
-#             'nickname': 'Super',
-#             'has_superpowers': False,
-#             'contacts': {
-#                 'tel': '333-55-55',
-#                 'email': 'super.ivo@bobul.com',
-#                 'website': 'https://super.ivo.bobul.com'
-#             },
-#             'address': {
-#                 'country': 'Ukraine',
-#                 'city': 'Kiev',
-#                 'street': 'Tarasa Shevchenko'
-#             }
-#         })
+
+
+class PersonTestCase(TestCase):
+    def setUp(self):
+        Person.objects.create(first_name="Ivo", nickname="Super", last_name="Bobul", middle_name="Tarasovich",
+                              actually_exists=False, has_superpowers=True,
+                              tel="333-55-55", email="super.ivo@bobul.com", website="https://super.ivo.bobul.com",
+                              address_country="Ukraine", address_city="Kiev", address_street="Tarasa Shevchenko")
+
+    def test_person_to_dict(self):
+        """This test tests both prefix and manual field grouping, as well as field skipping"""
+
+        person = Person.objects.get()
+
+        self.assertEqual(person.to_dict(), {
+            'name': {
+                'first_name': person.first_name,
+                'middle_name': person.middle_name,
+                'last_name': person.last_name,
+            },
+            'nickname': person.nickname,
+            'has_superpowers': person.has_superpowers,
+            'contacts': {
+                'tel': person.tel,
+                'email': person.email,
+                'website': person.website
+            },
+            'address': {
+                'country': person.address_country,
+                'city': person.address_city,
+                'street': person.address_street
+            }
+        })
