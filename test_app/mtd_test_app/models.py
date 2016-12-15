@@ -94,12 +94,7 @@ class Person(models.Model, ToDictMixin):
     # TO_DICT_* local model settings (will override values from project-level settings.py)
     TO_DICT_SKIP = ('id', 'created_at', 'updated_at', 'actually_exists')
     TO_DICT_GROUPING = {
-        'contacts': ('tel', 'email', 'website'),
-        'name': {
-            # TODO: custom mapping; postfixes
-            'first_name',
-            'middle_name',
-            'last_name',
-        }
+        'contacts': ('tel', 'email', 'website')
     }
     TO_DICT_PREFIXES = ('address_',)
+    TO_DICT_POSTFIXES = ('_name',)

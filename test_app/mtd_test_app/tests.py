@@ -95,11 +95,12 @@ class PersonTestCase(TestCase):
 
         person = Person.objects.get()
 
+
         self.assertEqual(person.to_dict(), {
             'name': {
-                'first_name': person.first_name,
-                'middle_name': person.middle_name,
-                'last_name': person.last_name,
+                'first': person.first_name,
+                'middle': person.middle_name,
+                'last': person.last_name,
             },
             'nickname': person.nickname,
             'has_superpowers': person.has_superpowers,

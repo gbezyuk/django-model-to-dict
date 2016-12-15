@@ -1,5 +1,5 @@
 from .settings import TO_DICT_PREFIXES, TO_DICT_PREFIX_SEPARATOR, TO_DICT_GROUPING,\
-    TO_DICT_SERIALIZATION_PLUGINS, TO_DICT_SKIP
+    TO_DICT_SERIALIZATION_PLUGINS, TO_DICT_SKIP, TO_DICT_POSTFIXES, TO_DICT_POSTFIX_SEPARATOR
 
 
 class ToDictMixin:
@@ -119,6 +119,9 @@ class ToDictMixin:
         # initializing prefix-based field grouping
         self._init_prefixes(result)
 
+        # initializing postfix-based field grouping
+        self._init_postfixes(result)
+
         # iterating over model's fields
         for field in self._meta.concrete_fields:
 
@@ -130,7 +133,16 @@ class ToDictMixin:
             prefix = self._get_prefix(field.name)
             if prefix:
                 prefix_key = self._clean_prefix(prefix)
+                # TODO: better prefix removal
                 result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
+                continue
+
+            # handling postfixed fields grouping
+            postfix = self._get_postfix(field.name)
+            if postfix:
+                postfix_key = self._clean_postfix(postfix)
+                # TODO: better postfix removal
+                result[postfix_key][field.name.replace(postfix, '')] = field.value_from_object(self)
                 continue
 
             # handling manually specified field grouping
@@ -138,6 +150,7 @@ class ToDictMixin:
             if group:
                 result[group][field.name] = field.value_from_object(self)
                 continue
+            # TODO: custom mapping
 
             # handling images and other non-trivial files
             # if self._handle_nontrivial_field(field, result):
@@ -178,6 +191,10 @@ class ToDictMixin:
         for prefix in getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES):
             result[self._clean_prefix(prefix)] = {}
 
+    def _init_postfixes(self, result):
+        for postfix in getattr(self, 'TO_DICT_POSTFIXES', TO_DICT_POSTFIXES):
+            result[self._clean_postfix(postfix)] = {}
+
     def _handle_nontrivial_field(self, field, data):
 
         serialization_plugins = getattr(self, 'TO_DICT_SERIALIZATION_PLUGINS', TO_DICT_SERIALIZATION_PLUGINS)
@@ -201,6 +218,15 @@ class ToDictMixin:
     def _clean_prefix(self, prefix):
         # TODO: strip at the end only
         return prefix.replace(getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR), '')
+
+    def _get_postfix(self, field_name):
+        for postfix in getattr(self, 'TO_DICT_POSTFIXES', TO_DICT_POSTFIXES):
+            if field_name.endswith(postfix):
+                return postfix
+
+    def _clean_postfix(self, postfix):
+        # TODO: strip at the beginning only
+        return postfix.replace(getattr(self, 'TO_DICT_POSTFIX_SEPARATOR', TO_DICT_POSTFIX_SEPARATOR), '')
 
     def _get_group(self, field_name):
         for group, group_cfg in (getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)).items():
