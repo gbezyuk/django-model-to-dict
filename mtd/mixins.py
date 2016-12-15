@@ -86,6 +86,18 @@ class ToDictMixin:
     as a model property. It's empty by default.
 
 
+    ## Postfix-Based Field Grouping
+
+    The same as mentioned above regarding prefixes works for postfixes, using `TO_DICT_POSTFIXES`
+    and `TO_DICT_POSTFIX_SEPARATOR`.
+
+    ```
+    TO_DICT_POSTFIXES = ('_name',)
+    ```
+
+    This approach could be useful when dealing with translation like `first_name`, `last_name` => `name: first, last`.
+
+
     ## Serialization Plugins For Particular Field Types
 
     Django allows developers to use custom model field types, which may require specific serialization logic.
@@ -144,16 +156,14 @@ class ToDictMixin:
             prefix = self._get_prefix(field.name)
             if prefix:
                 prefix_key = self._clean_prefix(prefix)
-                # TODO: better prefix removal
-                result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
+                result[prefix_key][self._remove_prefix(field.name, prefix)] = field.value_from_object(self)
                 continue
 
             # handling postfixed fields grouping
             postfix = self._get_postfix(field.name)
             if postfix:
                 postfix_key = self._clean_postfix(postfix)
-                # TODO: better postfix removal
-                result[postfix_key][field.name.replace(postfix, '')] = field.value_from_object(self)
+                result[postfix_key][self._remove_postfix(field.name, postfix)] = field.value_from_object(self)
                 continue
 
             # handling manually specified field grouping
@@ -227,9 +237,8 @@ class ToDictMixin:
 
         related_fields = [rf for rf in self._meta.get_fields() if rf.is_relation]
         for rf in related_fields:
-            # TODO use __ive_been_there_already to prevent infinite recursion here
+            # TODO recursion using __ive_been_there_already to prevent stack overflow
             if rf.one_to_many:
-                # TODO: setup inspect_related_objects=False on to_dict() calls for related objects
                 result[rf.related_name] = [
                     i.to_dict(inspect_related_objects=False) for i in getattr(self, rf.related_name).all()]
             if rf.many_to_one or rf.one_to_one:
@@ -246,8 +255,10 @@ class ToDictMixin:
                 return prefix
 
     def _clean_prefix(self, prefix):
-        # TODO: strip at the end only
-        return prefix.replace(getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR), '')
+        separator = getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR)
+        if prefix.endswith(separator):
+            return prefix[:-len(separator)]
+        return prefix
 
     def _get_postfix(self, field_name):
         for postfix in getattr(self, 'TO_DICT_POSTFIXES', TO_DICT_POSTFIXES):
@@ -255,8 +266,10 @@ class ToDictMixin:
                 return postfix
 
     def _clean_postfix(self, postfix):
-        # TODO: strip at the beginning only
-        return postfix.replace(getattr(self, 'TO_DICT_POSTFIX_SEPARATOR', TO_DICT_POSTFIX_SEPARATOR), '')
+        separator = getattr(self, 'TO_DICT_POSTFIX_SEPARATOR', TO_DICT_POSTFIX_SEPARATOR)
+        if postfix.startswith(separator):
+            return postfix[len(separator):]
+        return postfix
 
     def _get_group(self, field_name):
         for group, group_cfg in (getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)).items():
@@ -304,3 +317,13 @@ class ToDictMixin:
         # TODO: actually iterate over groups
         for k in [k for k in result if result[k] == {}]:
             del result[k]
+
+    def _remove_prefix(self, field_name, prefix):
+        if field_name.startswith(prefix):
+            return field_name[len(prefix):]
+        return field_name
+
+    def _remove_postfix(self, field_name, postfix):
+        if field_name.endswith(postfix):
+            return field_name[:-len(postfix)]
+        return field_name
