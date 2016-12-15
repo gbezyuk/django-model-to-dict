@@ -21,7 +21,7 @@ class DegenerateTimestampedModel(models.Model, ToDictMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    TO_DICT_SKIP = ('created_at', 'modified_at')
+    TO_DICT_SKIP = ('created_at', 'updated_at')
 
 
 class DeliveryRecord(models.Model, ToDictMixin):

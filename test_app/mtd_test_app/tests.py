@@ -7,11 +7,10 @@ class DegenerateTestCase(TestCase):
         DegenerateModel.objects.create()
 
     def test_degenerate_model_to_dict(self):
-        """This test tests the simpliest case"""
-
+        """This test tests the simplest case"""
         degenerate_model_instance = DegenerateModel.objects.get()
         self.assertEqual(degenerate_model_instance.to_dict(), {
-            'id': degenerate_model_instance.id
+            'id': degenerate_model_instance.id,
         })
 
 
@@ -21,10 +20,9 @@ class DegenerateTimestampedModelTestCase(TestCase):
 
     def test_degenerate_model_to_dict(self):
         """This test tests skipping fields"""
-
-        degenerate_model_instance = DegenerateTimestampedModel.objects.get()
-        self.assertEqual(degenerate_model_instance.to_dict(), {
-            'id': degenerate_model_instance.id
+        degenerate_timestamped_model_instance = DegenerateTimestampedModel.objects.get()
+        self.assertEqual(degenerate_timestamped_model_instance.to_dict(), {
+            'id': degenerate_timestamped_model_instance.id,
         })
 
 
@@ -32,9 +30,8 @@ class ContactTestCase(TestCase):
     def setUp(self):
         Contact.objects.create(tel="555-55-55", email="name@example.com", website="http://name.me")
 
-    def test_degenerate_model_to_dict(self):
-        """This test tests skipping fields"""
-
+    def test_contact_to_dict(self):
+        """This test tests manual field grouping"""
         contact = Contact.objects.get()
         self.assertEqual(contact.to_dict(), {
             'id': contact.id,
@@ -50,8 +47,8 @@ class DeliveryRecordTestCase(TestCase):
     def setUp(self):
         DeliveryRecord.objects.create(address_country="Russia", address_city="Moscow", address_street="Red Square")
 
-    def test_degenerate_model_to_dict(self):
-        """This test tests skipping fields"""
+    def test_delivery_to_dict(self):
+        """This test tests prefix field grouping"""
 
         delivery = DeliveryRecord.objects.get()
         self.assertEqual(delivery.to_dict(), {
