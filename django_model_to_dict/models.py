@@ -1,5 +1,5 @@
 from django.db import models
-from mtd.mixins import ToDictMixin
+from django_model_to_dict.mixins import ToDictMixin
 from django.utils.translation import ugettext_lazy as _
 
 

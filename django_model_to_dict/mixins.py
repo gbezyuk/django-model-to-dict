@@ -108,17 +108,19 @@ class ToDictMixin:
     image versions:
 
     ```
-    TO_DICT_SERIALIZATION_PLUGINS = ('model_to_dict.plugins.serialization.FilebrowserFieldSerializationPlugin', )
+    TO_DICT_SERIALIZATION_PLUGINS = ('django_model_to_dict.plugins.serialization.FilebrowserFieldSerializationPlugin',)
     ```
 
     `TO_DICT_SERIALIZATION_PLUGINS` may be set in global settings or as a model property. It's empty by default.
+
+    This feature is not covered with unit tests yet.
 
 
     ## Related Fields Output
 
     With `inspect_related_objects` argument specified to `True` (which is the default value), the serializer will
     also include information from `to_dict`-enabled related models. **Warning**: `related_name` is currently required.
-    
+
 
     ## Output Compression
 

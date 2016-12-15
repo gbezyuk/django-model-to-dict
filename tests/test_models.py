@@ -1,5 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+test_django-model-to-dict
+------------
+
+Tests for `django-model-to-dict` models module.
+"""
+
 from django.test import TestCase
-from .models import DegenerateModel, DegenerateTimestampedModel,\
+from django_model_to_dict.models import DegenerateModel, DegenerateTimestampedModel,\
     ContactPerson, DeliveryRecord, Person,\
     Customer, Product, Order, OrderPosition
 
