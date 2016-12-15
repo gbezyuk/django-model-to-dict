@@ -121,7 +121,7 @@ class ToDictMixin:
         fields_to_skip = getattr(self, 'TO_DICT_SKIP', TO_DICT_SKIP)
 
         # initializing manually specified field grouping
-        # self._init_grouping(result, grouping_cfg)
+        self._init_grouping(result, grouping_cfg)
 
         # initializing prefix-based field grouping
         # self._init_prefixes(result, raw_prefixes)
@@ -130,20 +130,25 @@ class ToDictMixin:
         for field in self._meta.concrete_fields:
 
             # skipping explicitly specified fields
-            # if field.name in fields_to_skip:
-            #     continue
+            if field.name in fields_to_skip:
+                continue
 
             # handling prefixed fields grouping
+            # if field.name in grouping_cfg.keys():
+            #     result[field.name] = field.value_from_object(self)
+            #     continue
             # prefix = self._get_grouping_prefix(field.name)
             # if prefix:
             #     prefix_key = self._clean_grouping_prefix(prefix)
             #     result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
             #     continue
 
+
             # handling manually specified field grouping
-            # if field.name in grouping_cfg.keys():
-            #     result[field.name] = field.value_from_object(self)
-            #     continue
+            group = self._get_group(field.name)
+            if group:
+                result[group][field.name] = field.value_from_object(self)
+                continue
 
             # handling images and other non-trivial files
             # if self._handle_nontrivial_field(field, result):
@@ -205,8 +210,6 @@ class ToDictMixin:
 
         prefixes = getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES)
 
-        if not prefixes:
-            return None
         for group_prefix in prefixes:
             if field_name.startswith(group_prefix):
                 return group_prefix
@@ -221,3 +224,16 @@ class ToDictMixin:
         prefix_separator = getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR)
 
         return prefix.replace(prefix_separator, '')  # TODO: strip at the end only
+
+    def _get_group(self, field_name):
+
+        # these are adjustable settings, which may come from:
+        # * defaults,
+        # * global project settings,
+        # * or from local class definitions
+
+        grouping_cfg = getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)
+
+        for group, group_cfg in enumerate(grouping_cfg):
+            if field_name in group_cfg:
+                return group
