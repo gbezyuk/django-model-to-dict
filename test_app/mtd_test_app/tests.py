@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import DegenerateModel, DegenerateTimestampedModel, ContactPerson, DeliveryRecord, Person
+from .models import DegenerateModel, DegenerateTimestampedModel, ContactPerson, DeliveryRecord, Person, Customer
 
 
 class DegenerateTestCase(TestCase):
@@ -85,7 +85,34 @@ class DeliveryRecordTestCase(TestCase):
 
 class PersonTestCase(TestCase):
     def setUp(self):
-        Person.objects.create(first_name="Ivo", nickname="Super", last_name="Bobul", middle_name="Tarasovich",
+        Person.objects.create(first_name="Ivo", last_name="Bobul")
+
+    def test_person_to_dict(self):
+        """This test tests postfix field grouping"""
+
+        person = Person.objects.get()
+
+        self.assertEqual(person.to_dict(), {
+            'id': person.id,
+            'name': {
+                'first': person.first_name,
+                'last': person.last_name,
+            }
+        })
+
+        self.assertEqual(person.to_dict(compress_postfixes=False), {
+            'id': person.id,
+            'name': {
+                'first': person.first_name,
+                'middle': None,
+                'last': person.last_name,
+            }
+        })
+
+
+class CustomerTestCase(TestCase):
+    def setUp(self):
+        Customer.objects.create(first_name="Ivo", nickname="Super", last_name="Bobul", middle_name="Tarasovich",
                               actually_exists=False, has_superpowers=True,
                               tel="333-55-55", email="super.ivo@bobul.com", website="https://super.ivo.bobul.com",
                               address_country="Ukraine", address_city="Kiev", address_street="Tarasa Shevchenko")
@@ -93,25 +120,24 @@ class PersonTestCase(TestCase):
     def test_person_to_dict(self):
         """This test tests both prefix and manual field grouping, as well as field skipping"""
 
-        person = Person.objects.get()
+        customer = Customer.objects.get()
 
-
-        self.assertEqual(person.to_dict(), {
+        self.assertEqual(customer.to_dict(), {
             'name': {
-                'first': person.first_name,
-                'middle': person.middle_name,
-                'last': person.last_name,
+                'first': customer.first_name,
+                'middle': customer.middle_name,
+                'last': customer.last_name,
             },
-            'nickname': person.nickname,
-            'has_superpowers': person.has_superpowers,
+            'nickname': customer.nickname,
+            'has_superpowers': customer.has_superpowers,
             'contacts': {
-                'tel': person.tel,
-                'email': person.email,
-                'website': person.website
+                'tel': customer.tel,
+                'email': customer.email,
+                'website': customer.website
             },
             'address': {
-                'country': person.address_country,
-                'city': person.address_city,
-                'street': person.address_street
+                'country': customer.address_country,
+                'city': customer.address_city,
+                'street': customer.address_street
             }
         })

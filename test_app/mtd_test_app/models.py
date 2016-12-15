@@ -58,15 +58,28 @@ class ContactPerson(models.Model, ToDictMixin):
 
 
 class Person(models.Model, ToDictMixin):
-    """This model is suitable for storing information on both superheroes and ordinary people"""
+    """This model contains personal information"""
 
     class Meta:
         verbose_name = _('Person')
         verbose_name_plural = _('People')
 
-    # Below are just normal model field definitions with some visual grouping
+    # these fields are supposed to be grouped under 'name' with 'first', 'middle' and 'last' keys, see TO_DICT_POSTFIXES
+    first_name = models.CharField(max_length=100, verbose_name=_('first name'))
+    middle_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('middle name'))
+    last_name = models.CharField(max_length=100, verbose_name=_('last name'))
 
-    # these fields are supposed to be grouped under 'name' with 'first', 'middle' and 'last' keys, see TO_DICT_GROUPING
+    TO_DICT_POSTFIXES = ('_name',)
+
+
+class Customer(models.Model, ToDictMixin):
+    """This model is suitable for storing information on both superheroes and ordinary people"""
+
+    class Meta:
+        verbose_name = _('Customer')
+        verbose_name_plural = _('Customers')
+
+    # these fields are supposed to be grouped under 'name' with 'first', 'middle' and 'last' keys, see TO_DICT_POSTFIXES
     first_name = models.CharField(max_length=100, verbose_name=_('first name'))
     middle_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('middle name'))
     last_name = models.CharField(max_length=100, verbose_name=_('last name'))

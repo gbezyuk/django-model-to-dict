@@ -101,7 +101,7 @@ class ToDictMixin:
 
     """
 
-    def to_dict(self, compress_fields=True, compress_groups=True, compress_prefixes=True):
+    def to_dict(self, compress_fields=True, compress_groups=True, compress_prefixes=True, compress_postfixes=True):
         """
         Serializes model's fields into a python dictionary.
 
@@ -166,6 +166,8 @@ class ToDictMixin:
             self._compress_groups(result)
         if compress_prefixes:
             self._compress_prefixes(result)
+        if compress_postfixes:
+            self._compress_postfixes(result)
 
         # cleanup for unused grouping
         # for k in [k for k in result if result[k] == {}]:
@@ -259,3 +261,13 @@ class ToDictMixin:
                     to_clear.append(field_name)
             for field_name in to_clear:
                 del result[prefix_key][field_name]
+
+    def _compress_postfixes(self, result):
+        for postfix in getattr(self, 'TO_DICT_POSTFIXES', TO_DICT_POSTFIXES):
+            postfix_key = self._clean_postfix(postfix)
+            to_clear = []
+            for field_name, field_value in result[postfix_key].items():
+                if not field_value:
+                    to_clear.append(field_name)
+            for field_name in to_clear:
+                del result[postfix_key][field_name]
