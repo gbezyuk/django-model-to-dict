@@ -3,6 +3,7 @@ from .plugins.serialization.filebrowser_field import FilebrowserFieldSerializati
 
 # TODO: extract to global settings, but still allow local in-class setting rewriting
 
+
 class SampleToDictModel(ToDictMixin):
     TO_DICT_SERIALIZATION_PLUGINS = (FilebrowserFieldSerializationPlugin, )
     TO_DICT_SKIP_FIELDS = ('created', 'modified', 'is_enabled', 'order')
