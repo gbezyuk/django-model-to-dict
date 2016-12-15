@@ -2,3 +2,5 @@
 /venv
 .tox
 **.egg-info
+/build
+/dist
