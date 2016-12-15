@@ -116,55 +116,55 @@ class ToDictMixin:
         # * global project settings,
         # * or from local class definitions
 
-        grouping_cfg = self.TO_DICT_GROUPING or TO_DICT_GROUPING
-        raw_prefixes = self.TO_DICT_PREFIXES or TO_DICT_PREFIXES
-        fields_to_skip = self.TO_DICT_SKIP or TO_DICT_SKIP
+        grouping_cfg = getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)
+        raw_prefixes = getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES)
+        fields_to_skip = getattr(self, 'TO_DICT_SKIP', TO_DICT_SKIP)
 
         # initializing manually specified field grouping
-        self._init_grouping(result, grouping_cfg)
+        # self._init_grouping(result, grouping_cfg)
 
         # initializing prefix-based field grouping
-        self._init_prefixes(result, raw_prefixes)
+        # self._init_prefixes(result, raw_prefixes)
 
         # iterating over model's fields
         for field in self._meta.concrete_fields:
 
             # skipping explicitly specified fields
-            if field.name in fields_to_skip:
-                continue
+            # if field.name in fields_to_skip:
+            #     continue
 
             # handling prefixed fields grouping
-            prefix = self._get_grouping_prefix(field.name)
-            if prefix:
-                prefix_key = self._clean_grouping_prefix(prefix)
-                result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
-                continue
+            # prefix = self._get_grouping_prefix(field.name)
+            # if prefix:
+            #     prefix_key = self._clean_grouping_prefix(prefix)
+            #     result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
+            #     continue
 
             # handling manually specified field grouping
-            # TODO: fix
-            if field.name in grouping_cfg.keys():
-                result[field.name] = field.value_from_object(self)
-                continue
+            # if field.name in grouping_cfg.keys():
+            #     result[field.name] = field.value_from_object(self)
+            #     continue
 
             # handling images and other non-trivial files
-            if self._handle_nontrivial_field(field, result):
-                continue
+            # if self._handle_nontrivial_field(field, result):
+            #     continue
+
             # handling default case
             result[field.name] = field.value_from_object(self)
 
         # cleanup for unused grouping
-        for k in [k for k in result if result[k] == {}]:
-            del result[k]
+        # for k in [k for k in result if result[k] == {}]:
+        #     del result[k]
 
-        # the mixin allows to redifine the related fields strategy
-        if hasattr(self, '_to_dict_related_fields_strategy'):
-            self._to_dict_related_fields_strategy(result)
-        else:
-            self._default_related_fields_strategy(result)
+        # the mixin allows to redefine the related fields strategy
+        # if hasattr(self, '_to_dict_related_fields_strategy'):
+        #     self._to_dict_related_fields_strategy(result)
+        # else:
+        #     self._default_related_fields_strategy(result)
 
         # calling pre_finish_hook if exists
-        if hasattr(self, '_to_dict_pre_finish_hook'):
-            self._to_dict_pre_finish_hook(result)
+        # if hasattr(self, '_to_dict_pre_finish_hook'):
+        #     self._to_dict_pre_finish_hook(result)
 
         return result
 
@@ -183,9 +183,9 @@ class ToDictMixin:
         # * global project settings,
         # * or from local class definitions
 
-        SERIALIZATION_PLUGINS = self.TO_DICT_SERIALIZATION_PLUGINS or TO_DICT_SERIALIZATION_PLUGINS
+        serialization_plugins = getattr(self, 'TO_DICT_SERIALIZATION_PLUGINS', TO_DICT_SERIALIZATION_PLUGINS)
 
-        for plugin in SERIALIZATION_PLUGINS:
+        for plugin in serialization_plugins:
             if plugin.check_field(field):
                 data[field.name] = plugin.serialize_field(field, self)
                 return True
@@ -203,11 +203,11 @@ class ToDictMixin:
         # * global project settings,
         # * or from local class definitions
 
-        PREFIXES = self.TO_DICT_PREFIXES or TO_DICT_PREFIXES
+        prefixes = getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES)
 
-        if not self.AUTOGROUPING_PREFIXES:
+        if not prefixes:
             return None
-        for group_prefix in self.AUTOGROUPING_PREFIXES:
+        for group_prefix in prefixes:
             if field_name.startswith(group_prefix):
                 return group_prefix
 
@@ -218,6 +218,6 @@ class ToDictMixin:
         # * global project settings,
         # * or from local class definitions
 
-        PREFIX_SEPARATOR = self.TO_DICT_PREFIX_SEPARATOR or TO_DICT_PREFIX_SEPARATOR
+        prefix_separator = getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR)
 
-        return prefix.replace(PREFIX_SEPARATOR, '')  # TODO: strip at the end only
+        return prefix.replace(prefix_separator, '')  # TODO: strip at the end only
