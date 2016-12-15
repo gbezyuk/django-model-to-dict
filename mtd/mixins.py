@@ -16,7 +16,10 @@ class ToDictMixin:
     * skipping fields
     * manual field grouping
     * prefix-based field grouping
+    * postfix-based field grouping
     * serialization plugins for particular field types
+    * related fields output
+    * output compression
 
 
     ## Skipping Fields
@@ -110,6 +113,27 @@ class ToDictMixin:
 
     `TO_DICT_SERIALIZATION_PLUGINS` may be set in global settings or as a model property. It's empty by default.
 
+
+    ## Related Fields Output
+
+    With `inspect_related_objects` argument specified to `True` (which is the default value), the serializer will
+    also include information from `to_dict`-enabled related models. **Warning**: `related_name` is currently required.
+    
+
+    ## Output Compression
+
+    There is a set of to_dict arguments which names are prefixed with `compress_`. These arguments control the way
+    the serializer deals with empty values. Basically, when compression is on, empty values won't appear in the output;
+    while with compression switched off they will be preserved.
+
+    * `compress_fields`: ignore None fields on root level. Default: `True`.
+    * `compress_groups`: ignore None fields inside manual groups. Default: `True`.
+    * `compress_prefixes`: ignore None fields inside prefix groups. Default: `True`.
+    * `compress_postfixes`: ignore None fields inside postfix groups. Default: `True`.
+    * `compress_empty_groups`: ignore empty groups as a whole. Default: `False`.
+
+    Not used yet:
+    * `compress_empty_related_objects`: ignore empty or None values in related objects. Default: `False`.
 
     """
 
@@ -239,6 +263,8 @@ class ToDictMixin:
         for rf in related_fields:
             # TODO recursion using __ive_been_there_already to prevent stack overflow
             if rf.one_to_many:
+                if not rf.related_name:
+                    continue
                 result[rf.related_name] = [
                     i.to_dict(inspect_related_objects=False) for i in getattr(self, rf.related_name).all()]
             if rf.many_to_one or rf.one_to_one:
