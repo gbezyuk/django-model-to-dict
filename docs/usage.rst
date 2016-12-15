@@ -24,6 +24,6 @@ Use `ToDictMixin` with your model:
     class YourModel(models.Model, ToDictMixin):
         pass
 
-Since now you model's instance have the `to_dict` method defined.
+Since now you model's instances have the `to_dict` method defined.
 
 You can setup additional settings both in your global project configuration or in a particular model.
