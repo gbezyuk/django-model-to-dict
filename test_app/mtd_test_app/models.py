@@ -31,7 +31,7 @@ class DeliveryRecord(models.Model, ToDictMixin):
         verbose_name = _('Delivery Record')
         verbose_name_plural = _('Delivery Records')
 
-    # supposed to be grouped under 'address' via prefix, see TO_DICT_PREFIXES
+    # these fields are supposed to be grouped under 'address' via prefix, see TO_DICT_PREFIXES
     address_country = models.CharField(max_length=100, verbose_name=_('address country'))
     address_state = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('address state'))
     address_city = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('address city'))
@@ -40,17 +40,19 @@ class DeliveryRecord(models.Model, ToDictMixin):
     TO_DICT_PREFIXES = ('address_',)
 
 
-class Contact(models.Model, ToDictMixin):
+class ContactPerson(models.Model, ToDictMixin):
     """This model contains contact information"""
 
     class Meta:
         verbose_name = _('Contact')
         verbose_name_plural = _('Contact')
 
-    # supposed to be grouped under 'contacts', see TO_DICT_GROUPING
+    name = models.CharField(max_length=100, verbose_name=_('name'))
+
+    # these fields are supposed to be grouped under 'contacts', see TO_DICT_GROUPING
     tel = models.CharField(max_length=30, verbose_name=_('tel'))
     email = models.EmailField(max_length=30, verbose_name=_('email'))
-    website = models.URLField(max_length=100, verbose_name=_('website'))
+    website = models.URLField(max_length=100, blank=True, null=True, verbose_name=_('website'))
 
     TO_DICT_GROUPING = {'contacts': ('tel', 'email', 'website')}
 

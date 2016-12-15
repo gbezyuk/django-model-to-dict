@@ -101,7 +101,7 @@ class ToDictMixin:
 
     """
 
-    def to_dict(self):
+    def to_dict(self, compress_groups=True, compress_prefixes=True):
         """
         Serializes model's fields into a python dictionary.
 
@@ -111,20 +111,13 @@ class ToDictMixin:
         # the resulting dictionary
         result = {}
 
-        # these are adjustable settings, which may come from:
-        # * defaults,
-        # * global project settings,
-        # * or from local class definitions
-
-        grouping_cfg = getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)
-        raw_prefixes = getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES)
         fields_to_skip = getattr(self, 'TO_DICT_SKIP', TO_DICT_SKIP)
 
         # initializing manually specified field grouping
-        self._init_grouping(result, grouping_cfg)
+        self._init_grouping(result)
 
         # initializing prefix-based field grouping
-        # self._init_prefixes(result, raw_prefixes)
+        self._init_prefixes(result)
 
         # iterating over model's fields
         for field in self._meta.concrete_fields:
@@ -134,15 +127,11 @@ class ToDictMixin:
                 continue
 
             # handling prefixed fields grouping
-            # if field.name in grouping_cfg.keys():
-            #     result[field.name] = field.value_from_object(self)
-            #     continue
-            # prefix = self._get_grouping_prefix(field.name)
-            # if prefix:
-            #     prefix_key = self._clean_grouping_prefix(prefix)
-            #     result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
-            #     continue
-
+            prefix = self._get_prefix(field.name)
+            if prefix:
+                prefix_key = self._clean_prefix(prefix)
+                result[prefix_key][field.name.replace(prefix, '')] = field.value_from_object(self)
+                continue
 
             # handling manually specified field grouping
             group = self._get_group(field.name)
@@ -156,6 +145,12 @@ class ToDictMixin:
 
             # handling default case
             result[field.name] = field.value_from_object(self)
+
+        # setup empty values for None-valued fields
+        if compress_groups:
+            self._compress_groups(result)
+        if compress_prefixes:
+            self._compress_prefixes(result)
 
         # cleanup for unused grouping
         # for k in [k for k in result if result[k] == {}]:
@@ -173,20 +168,15 @@ class ToDictMixin:
 
         return result
 
-    def _init_grouping(self, result, grouping_cfg):
-        for prefix in grouping_cfg:
+    def _init_grouping(self, result):
+        for prefix in getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING):
             result[prefix] = {}
 
-    def _init_prefixes(self, result, raw_prefixes):
-        for prefix in raw_prefixes:
-            result[self._clean_grouping_prefix(prefix)] = {}
+    def _init_prefixes(self, result):
+        for prefix in getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES):
+            result[self._clean_prefix(prefix)] = {}
 
     def _handle_nontrivial_field(self, field, data):
-
-        # these are adjustable settings, which may come from:
-        # * defaults,
-        # * global project settings,
-        # * or from local class definitions
 
         serialization_plugins = getattr(self, 'TO_DICT_SERIALIZATION_PLUGINS', TO_DICT_SERIALIZATION_PLUGINS)
 
@@ -201,39 +191,35 @@ class ToDictMixin:
         for rf in related_fields:
             data[rf.name] = [i.to_dict() for i in getattr(self, rf.name).all()]
 
-    def _get_grouping_prefix(self, field_name):
+    def _get_prefix(self, field_name):
+        for prefix in getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES):
+            if field_name.startswith(prefix):
+                return prefix
 
-        # these are adjustable settings, which may come from:
-        # * defaults,
-        # * global project settings,
-        # * or from local class definitions
-
-        prefixes = getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES)
-
-        for group_prefix in prefixes:
-            if field_name.startswith(group_prefix):
-                return group_prefix
-
-    def _clean_grouping_prefix(self, prefix):
-
-        # these are adjustable settings, which may come from:
-        # * defaults,
-        # * global project settings,
-        # * or from local class definitions
-
-        prefix_separator = getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR)
-
-        return prefix.replace(prefix_separator, '')  # TODO: strip at the end only
+    def _clean_prefix(self, prefix):
+        # TODO: strip at the end only
+        return prefix.replace(getattr(self, 'TO_DICT_PREFIX_SEPARATOR', TO_DICT_PREFIX_SEPARATOR), '')
 
     def _get_group(self, field_name):
-
-        # these are adjustable settings, which may come from:
-        # * defaults,
-        # * global project settings,
-        # * or from local class definitions
-
-        grouping_cfg = getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)
-
-        for group, group_cfg in enumerate(grouping_cfg):
+        for group, group_cfg in (getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)).items():
             if field_name in group_cfg:
                 return group
+
+    def _compress_groups(self, result):
+        for group in (getattr(self, 'TO_DICT_GROUPING', TO_DICT_GROUPING)).keys():
+            to_clear = []
+            for field_name, field_value in result[group].items():
+                if not field_value:
+                    to_clear.append(field_name)
+            for field_name in to_clear:
+                del result[group][field_name]
+
+    def _compress_prefixes(self, result):
+        for prefix in getattr(self, 'TO_DICT_PREFIXES', TO_DICT_PREFIXES):
+            prefix_key = self._clean_prefix(prefix)
+            to_clear = []
+            for field_name, field_value in result[prefix_key].items():
+                if not field_value:
+                    to_clear.append(field_name)
+            for field_name in to_clear:
+                del result[prefix_key][field_name]
