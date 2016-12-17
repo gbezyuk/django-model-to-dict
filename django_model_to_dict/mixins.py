@@ -182,29 +182,24 @@ class ToDictMixin:
             prefix = self._get_prefix(field.name)
             if prefix:
                 prefix_key = self._clean_prefix(prefix)
-                result[prefix_key][self._remove_prefix(field.name, prefix)] = field.value_from_object(self)
+                result[prefix_key][self._remove_prefix(field.name, prefix)] = self._handle_nontrivial_field(field) or field.value_from_object(self)
                 continue
 
             # handling postfixed fields grouping
             postfix = self._get_postfix(field.name)
             if postfix:
                 postfix_key = self._clean_postfix(postfix)
-                result[postfix_key][self._remove_postfix(field.name, postfix)] = field.value_from_object(self)
+                result[postfix_key][self._remove_postfix(field.name, postfix)] = self._handle_nontrivial_field(field) or field.value_from_object(self)
                 continue
 
             # handling manually specified field grouping
             group = self._get_group(field.name)
             if group:
-                result[group][field.name] = field.value_from_object(self)
+                result[group][field.name] = self._handle_nontrivial_field(field) or field.value_from_object(self)
                 continue
             # TODO: custom mapping
 
-            # handling images and other non-trivial files
-            if self._handle_nontrivial_field(field, result):
-                continue
-
-            # handling default case
-            result[field.name] = field.value_from_object(self)
+            result[field.name] = self._handle_nontrivial_field(field) or field.value_from_object(self)
 
         # setup empty values for None-valued fields
         if compress_fields:
@@ -243,15 +238,14 @@ class ToDictMixin:
         for postfix in getattr(self, 'TO_DICT_POSTFIXES', TO_DICT_POSTFIXES):
             result[self._clean_postfix(postfix)] = {}
 
-    def _handle_nontrivial_field(self, field, data):
+    def _handle_nontrivial_field(self, field):
 
         serialization_plugins = getattr(self, 'TO_DICT_SERIALIZATION_PLUGINS', TO_DICT_SERIALIZATION_PLUGINS)
 
-        for plugin in serialization_plugins:
+        for plugin in serialization_plugins:            
             if plugin.check_field(field):
-                data[field.name] = plugin.serialize_field(field, self)
-                return True
-        return False
+                return plugin.serialize_field(field, self)
+        return None
 
     def _default_related_fields_strategy(self, result):
         # TODO: better tests
