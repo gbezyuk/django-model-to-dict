@@ -131,7 +131,7 @@ class Order(models.Model, ToDictMixin):
         verbose_name = _('Order')
         verbose_name_plural = _('Orders')
 
-    customer = models.ForeignKey(to=Customer, verbose_name=_('customer'), related_name='orders')
+    customer = models.ForeignKey(to=Customer, verbose_name=_('customer'), related_name='orders', on_delete=models.CASCADE)
 
 
 class OrderPosition(models.Model, ToDictMixin):
@@ -143,5 +143,5 @@ class OrderPosition(models.Model, ToDictMixin):
 
     price = models.PositiveIntegerField(verbose_name=_('price'))
     quantity = models.PositiveIntegerField(verbose_name=_('quantity'))
-    product = models.ForeignKey(to=Product, verbose_name=_('product'), related_name='order_positions')
-    order = models.ForeignKey(to=Order, verbose_name=_('order'), related_name='order_positions')
+    product = models.ForeignKey(to=Product, verbose_name=_('product'), related_name='order_positions', on_delete=models.CASCADE)
+    order = models.ForeignKey(to=Order, verbose_name=_('order'), related_name='order_positions', on_delete=models.CASCADE)
