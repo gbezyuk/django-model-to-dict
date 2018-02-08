@@ -12,7 +12,7 @@ try:
                 "ENGINE": "django.db.backends.sqlite3",
             }
         },
-        ROOT_URLCONF="django_model_to_dict.urls",
+        #ROOT_URLCONF="django_model_to_dict.urls",
         INSTALLED_APPS=[
             "django.contrib.auth",
             "django.contrib.contenttypes",
