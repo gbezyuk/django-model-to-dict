@@ -1,5 +1,6 @@
 from .settings import TO_DICT_PREFIXES, TO_DICT_PREFIX_SEPARATOR, TO_DICT_GROUPING,\
     TO_DICT_SERIALIZATION_PLUGINS, TO_DICT_SKIP, TO_DICT_POSTFIXES, TO_DICT_POSTFIX_SEPARATOR
+from django.utils.module_loading import import_string
 
 
 class ToDictMixin:
@@ -198,7 +199,6 @@ class ToDictMixin:
                 result[group][field.name] = self._handle_nontrivial_field(field) or field.value_from_object(self)
                 continue
             # TODO: custom mapping
-
             result[field.name] = self._handle_nontrivial_field(field) or field.value_from_object(self)
 
         # setup empty values for None-valued fields
@@ -242,7 +242,8 @@ class ToDictMixin:
 
         serialization_plugins = getattr(self, 'TO_DICT_SERIALIZATION_PLUGINS', TO_DICT_SERIALIZATION_PLUGINS)
 
-        for plugin in serialization_plugins:            
+        for plugin_str in serialization_plugins:
+            plugin = import_string(plugin_str)()
             if plugin.check_field(field):
                 return plugin.serialize_field(field, self)
         return None
